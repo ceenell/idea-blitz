@@ -1,3 +1,11 @@
+# Targets files
+*/_targets
+
+# Ignore intermediate pipeline files
+*/in/*
+*/tmp/*
+*/out/*
+
 # History files
 .Rhistory
 .Rapp.history
@@ -20,6 +28,7 @@
 
 # RStudio files
 .Rproj.user/
+*.Rproj
 
 # produced vignettes
 vignettes/*.html
