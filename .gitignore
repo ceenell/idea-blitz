@@ -38,3 +38,7 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+
+# project data files
+bloom-bubbles/in/NGWOS Ecology Data KSummers/
