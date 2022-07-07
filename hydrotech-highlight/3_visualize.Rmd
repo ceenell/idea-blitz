@@ -1,0 +1,29 @@
+---
+title: "Current example visuals"
+author: "Lindsay Platt"
+date: '2022-07-07'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(tidyverse.quiet = TRUE)
+```
+
+## Top 5 sites and their best friends!
+
+```{r top5_bffs_table, echo=FALSE}
+
+site_names <- p1_field_visit_sites_sf %>% 
+  st_drop_geometry() %>% 
+  select(site_no, station_nm)
+
+p2_field_visit_site_bff %>% 
+  filter(site_no %in% p2_field_visit_sites_top5) %>% 
+  left_join(site_names, by = "site_no") %>% 
+  select(site_no, station_nm, best_friend) %>% 
+  gridExtra::tableGrob(rows=NULL) %>% 
+  gridExtra::grid.arrange()
+
+```
+

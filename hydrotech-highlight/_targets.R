@@ -1,4 +1,5 @@
 library(targets)
+library(tarchetypes)
 
 options(tidyverse.quiet = TRUE)
 tar_option_set(packages = c(
@@ -6,6 +7,8 @@ tar_option_set(packages = c(
   'sf',
   'tidyverse'
 ))
+
+source('fxns.R')
 
 query_startDate <- '2022-01-01'
 query_endDate <- '2022-06-30'
@@ -39,10 +42,27 @@ p1_targets <- list(
 ##### Process/prep data #####
 p2_targets <- list(
 
+  # Summarize information about the site visitors using the `party_nm` field
+  tar_target(p2_field_visit_data_hydrotechs, parse_visitor_initials(p1_field_visit_data)),
+  tar_target(p2_field_visit_site_bff, identify_site_bff(p2_field_visit_data_hydrotechs)),
+
+  # Identify the top 5 most visited sites in the time period
+  tar_target(p2_field_visit_sites_top5, identify_most_visited_sites(p1_field_visit_data))
+
 )
 
 ##### Visualize data #####
 p3_targets <- list(
+
+  # Keeping visualization pieces in an RMD for now while I explore
+  tar_render(p3_visual_exploration_doc,
+             '3_visualize.Rmd',
+             params = list(
+               # Targets needed by the visualize step
+               p1_field_visit_sites_sf,
+               p2_field_visit_sites_top5,
+               p2_field_visit_site_bff),
+             packages = c('knitr', 'tidyverse'))
 
 )
 
