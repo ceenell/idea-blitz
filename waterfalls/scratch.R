@@ -16,7 +16,6 @@ library(ggthemes)
 library(USAboundaries) #install.packages("USAboundariesData", repos = "https://ropensci.r-universe.dev", type = "source")
 
 
-remove(list = ls())
 
 #' ## Fetch data
 #' 
