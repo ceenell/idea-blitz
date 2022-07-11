@@ -7,7 +7,7 @@ tar_option_set(packages = c(
   'ggraph'
 ))
 
-source('src/create_taxonomy.R')
+#source('src/create_taxonomy.R')
 
 # toxin producing genera of algae - either named in the fact sheet or on wikipedia
 harmful_algae <- c('Microcystis', 'Raphidiopis', 'Aphanizomenon', 'Chrysosporum', 
