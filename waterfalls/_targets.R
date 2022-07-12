@@ -106,7 +106,7 @@ viz_targets <- list(
   tar_target(
     waterfall_plot_png,
     plot_waterfalls(waterfalls_graphing_df,
-                    out_file = "out/main_watefalls_plot.png"),
+                    out_file = "out/main_waterfalls_plot.png"),
     format = "file"
   )
 )
