@@ -22,6 +22,27 @@ list(
     read_excel('in/NGWOS Ecology Data KSummers/Species Identification and Enumeration/rawdata_392_1_algae_01202022.xls',
                na = c("", "."))
   ),
+  tar_target(
+    toxins,
+    read_excel('in/NGWOS Ecology Data KSummers/CyanoToxinResults.2021.xlsx') %>%
+      filter(`Site Name` == "Illinois River at Starved Rock, IL") %>%
+      # create variable to match with toxin data
+      # some sample times are encoded in sample names to match
+      mutate(sample_id = case_when(
+        `Sample ID` == 'ILSR-Scum'  ~ 'ILSR 1530',
+        `Sample ID` == 'ILBR' & `Date Collected` == '6/16' ~ 'ILBR 1115',
+        `Sample ID` == 'ILSR' & `Date Collected` == '6/16' ~ 'ILSR 1200',
+        `Sample ID` == 'ILSRM' & `Date Collected` == '6/16' ~ 'ILSRM 1630',
+        `Sample ID` == '5553700' & `Date Collected` == '06/23' ~ 'Starved Rock 1600',
+        `Sample Date` == '*7/12/2021' ~ 'Starved Rock 1055',
+        `Sample ID` == 'ILBR' & `Date Collected` == '44439' ~ 'ILSRBR', ## not sure about this one, could be flipped with the next
+        `Sample ID` == 'ILSR' & `Date Collected` == '44439' ~ 'IL Grab @ sensors',
+        `Sample ID` == 'ILSRM' & `Date Collected` == '44440' & Time == 1000 ~ 'ILSR grab at sensors', # uncertain
+        `Sample ID` == 'ILSRM' & `Date Collected` == '44440' & Time ==  1030 ~ 'ILSRM'
+        
+      ))%>%
+      select(sample_id, MIB = `MIB\r\n(ng/L)`, geosmin = `Geosmin (ng/L)`, contains('Total'))
+  ),
   ## filter to Starved Rock site, minor data cleaning
   tar_target(
     raw_filt,
@@ -51,13 +72,15 @@ list(
     genus_total,
     genus_data %>%
       group_by(sample_id, sample_date, taxa_name, division, genus)%>%
-      summarize(across(c(contains('cells'), contains('biovolume')), ~sum(.x))) 
+      summarize(across(c(contains('cells'), contains('biovolume')), ~sum(.x))) %>%
+      left_join(toxins)
   ),
   tar_target(
     ## total by division x sample
     division_total,
     genus_data %>%
-      group_by(sample_id, sample_date, taxa_name, division)%>%
+      ungroup() %>%
+      group_by(sample_id, sample_date,division)%>%
       summarize(across(c(contains('cells'), contains('biovolume')), ~sum(.x))) 
   ),
   # create complete taxonomy for each terminal taxa in data
