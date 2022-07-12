@@ -69,18 +69,45 @@ list(
   ),
   tar_target(
     ## total by genus x sample, retain division
-    genus_total,
+    genus_sample_total,
     genus_data %>%
       group_by(sample_id, sample_date, taxa_name, division, genus)%>%
       summarize(across(c(contains('cells'), contains('biovolume')), ~sum(.x))) %>%
       left_join(toxins)
   ),
   tar_target(
+    ## total by genus x sample, retain division
+    genus_total,
+    genus_data %>%
+      group_by(taxa_name, division, genus)%>%
+      summarize(across(c(contains('cells'), contains('biovolume')), ~sum(.x))) %>%
+      mutate(cells_percent = 100*(cells/4505364),
+             biovolume_percent = 100*(biovolume/92723920))
+  ),
+  tar_target(
+    genus_total_csv,
+    {
+      out_file <- 'out/genus_total.csv'
+      write_csv(genus_total, out_file)
+      return(out_file)
+    },
+    format = 'file'
+  ),
+  tar_target(
+    genus_sample_total_csv,
+    {
+      out_file <- 'out/genus_sample_total.csv'
+      write_csv(genus_sample_total, out_file)
+      return(out_file)
+    },
+    format = 'file'
+  ),
+  tar_target(
     ## total by division x sample
     division_total,
     genus_data %>%
       ungroup() %>%
-      group_by(sample_id, sample_date,division)%>%
+      group_by(division)%>%
       summarize(across(c(contains('cells'), contains('biovolume')), ~sum(.x))) 
   ),
   # create complete taxonomy for each terminal taxa in data
