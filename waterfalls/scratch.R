@@ -162,7 +162,6 @@ summary(waterfall_data$drop_ft)
 summary(waterfall_data_cleaned$drop_ft)
 
 
-
 state_data <- waterfall_data %>%
   group_by(state) %>%
   summarise(mean = mean(drop_ft, na.rm = T),
