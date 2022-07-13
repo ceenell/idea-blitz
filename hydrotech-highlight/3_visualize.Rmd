@@ -13,95 +13,17 @@ options(tidyverse.quiet = TRUE)
 ## Top 5 sites and their best friends!
 
 ```{r visits_bff, height = 5, width = 10}
-
-site_names <- p1_field_visit_sites_sf %>% 
-  st_drop_geometry() %>% 
-  select(site_no, station_nm)
-
-top5_bffs <- p2_field_visit_site_bff %>% 
-  right_join(p2_field_visit_sites_top5, by="site_no") %>% 
-  mutate(percent_visits_by_bff = round(n_bff_visits/n_total_visits*100)) %>% 
-  arrange(n_total_visits) %>% 
-  left_join(site_names, by = "site_no") %>% 
-  mutate(nm_factor = factor(station_nm, levels = station_nm, ordered = TRUE))
-
-ggplot(top5_bffs, aes(x = nm_factor)) + 
-  geom_bar(aes(y = n_bff_visits), stat="identity", position = "identity", fill = '#F6CCB0') +
-  geom_bar(aes(y = n_total_visits), stat="identity", position = "identity", fill = NA, 
-           color = '#3774A3', size = 2) +  
-  geom_label(aes(y = n_total_visits, label = sprintf("%s total visits", n_total_visits)), hjust = "left", nudge_y = 10) +
-  geom_label(aes(y = n_bff_visits, label = sprintf("%s visited %s times", best_friend, n_bff_visits)), hjust = "left", nudge_y = 5) +
-  ylim(c(0, max(top5_bffs$n_total_visits)*1.25)) +
-  theme_minimal() +
-  theme(panel.grid = element_blank()) +
-  coord_flip()
-
+print(p3_bff_bars_gg)
 ```
 
 ## Hydrotechs visit no matter the distance
 
 ```{r visits_distance, height = 5, width = 8}
-
-p2_field_visits_yearly %>% 
-  inner_join(select(p2_field_visit_sites_nearest_city, site_no, nearest_place_distance_mi)) %>% 
-  mutate(travel_cat = cut(nearest_place_distance_mi, 
-                          breaks = c(0,2,10,50, 100, Inf), 
-                          labels = c('walk (< 2 mi)', 'bike (< 10 mi)', 
-                                     'around-town drive (< 50 mi)', 
-                                     'day drive (< 100 mi)',
-                                     'multi-day trip (100+ mi)'))) %>% 
-  
-  ggplot(aes(x = travel_cat, y = avg_annual_visits, color = travel_cat, fill = travel_cat)) +
-  scale_y_continuous(breaks = seq(0, 150, by=25)) +
-  geom_violin(alpha = 0.5, position = position_dodge(width = 0.75), size = 2,color=NA) +
-  ggbeeswarm::geom_quasirandom(shape = 21, size = 2, dodge.width = 0.75, color="white", alpha=0.5) +
-  scico::scale_color_scico_d(palette = 'lapaz', begin = 0.3, direction = -1) +
-  scico::scale_fill_scico_d(palette = 'lapaz', end = 0.8, direction = -1) +
-  theme_minimal() + 
-  theme(
-    legend.position="none",
-    axis.title.x = element_blank(),
-    panel.grid = element_blank(),
-    text = element_text(color = "darkgrey"),
-    axis.text = element_text(color = "darkgrey"),
-    plot.background =  element_rect(fill = "transparent", color = "transparent"),
-    panel.background = element_rect(fill = "transparent", color = "transparent"),
-    panel.grid.major.y = element_line(color = "lightgrey")
-  ) + 
-  ggtitle(
-    'Distribution of visits for sites grouped by their distance from a U.S. place with at least 50k residents', 
-    subtitle = 'This does not include Puerto Rico')
-
+print(p3_distance_violins_gg)
 ```
 
 ## Hydrotechs visit 'round the clock
 
 ```{r visits_time, height = 5, width = 5}
-
-choose_sunset_color <- function(tod) {
-  cut(tod, 
-      breaks = c(0,2,4,6,8,10,14,16,18,20,22,24), 
-      labels = c("#08183A", "#152852", "#4B3D60", 
-                 "#FD5E53", "#FC9C54", "#FFE373", 
-                 "#FC9C54", "#FD5E53", "#4B3D60", 
-                 "#152852", "#08183A"),
-      include.lowest = TRUE) %>% 
-    as.character()
-}
-
-p2_field_visits_timeofday %>% 
-  mutate(dot_color = choose_sunset_color(time_of_day)) %>% 
-  select(time_of_day, dot_color) %>% 
-  ggplot() + 
-  geom_jitter(aes(x = time_of_day, y = 0.5, color = dot_color), width=0.49, alpha=0.7, shape = 1) +
-  scale_color_identity() +
-  coord_polar(start = pi) + theme_void() +
-  theme(
-    # Make the background transparent
-    panel.background = element_rect(fill='transparent', color=NA),
-    plot.background = element_rect(fill='transparent', color=NA),
-    legend.background = element_rect(fill='transparent', color = NA),
-    legend.box.background = element_rect(fill='transparent', color = NA)
-  )
-
+print(p3_timing_radial_gg)
 ```

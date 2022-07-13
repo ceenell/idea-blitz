@@ -41,6 +41,7 @@ parse_visitor_initials <- function(field_visit_data) {
 #' site visitor, this function tallies the number of visits and returns the
 #' initials that appear the most for each site. We are calling the hydrotech
 #' behind the initials the site's "best friend".
+#'
 #' @param field_visit_data_hydrotechs a data.frame returned by `parse_visitor_initials()`
 #'
 #' @return data.frame with `site_no`, `best_friend`, and `n_bff_visits` columns
@@ -64,6 +65,7 @@ identify_site_bff <- function(field_visit_data_hydrotechs) {
 #' @title Return the sites with the most visits
 #' @description This function tallies the number of visits per site and
 #' returns `top_n` site numbers representing the most visited.
+#'
 #' @param field_visit_data a data.frame returned by `dataRetrieval::readNWISmeas()`
 #' @param top_n a number representing how many sites should be returned,
 #' defaults to 5
@@ -79,6 +81,34 @@ identify_most_visited_sites <- function(field_visit_data, top_n = 5) {
     arrange(desc(n)) %>%
     head(top_n) %>%
     select(site_no, n_total_visits = n)
+}
+
+#' @title For the top sites, identify the individual visited them the most.
+#' @description This function combines the most visited sites and adds the
+#' initials that appear the most frequently for each site. In addition, this
+#' adds the full station name and adds an ordered factor column to keep the
+#' highest sites in order from most total visits to least.
+#'
+#' @param field_visit_bff a data.frame returned by `parse_visitor_initials()`
+#' @param field_visit_highest a data.frame returned by `identify_most_visited_sites()`
+#' @param sites_sf an `sf` object created using NWIS site metadata
+#'
+#' @return data.frame with `site_no`, `best_friend`, `n_bff_visits`, `n_total_visits`,
+#' `station_nm`, and `station_nm_f` (ordered factor) columns.
+#'
+
+link_most_visited_sites_bff <- function(field_visit_bff, field_visit_highest, sites_sf) {
+  site_names <- sites_sf %>%
+    st_drop_geometry() %>%
+    select(site_no, station_nm)
+
+  top5_bffs <- field_visit_bff %>%
+    right_join(field_visit_highest, by="site_no") %>%
+    arrange(n_total_visits) %>%
+    left_join(site_names, by = "site_no") %>%
+    mutate(station_nm_f = factor(station_nm, levels = station_nm, ordered = TRUE))
+
+  return(top5_bffs)
 }
 
 #' @title Download population data from the U.S. Census Bureau
@@ -185,6 +215,30 @@ calculate_avg_annual_visits <- function(field_visit_data) {
     summarize(avg_annual_visits = mean(n, na.rm=TRUE))
 }
 
+
+#' @title Categorize each site into a distance bin based on proximity to populated places
+#' @description This function categorizes each site into a bin based on the distance to
+#' its `nearest_place` using the `nearest_place_distance_mi` column. It retains the
+#' annual visit rates so that they can be used in plotting later.
+#'
+#' @param site_visits_yearly the data.frame object returned by `calculate_avg_annual_visits()`
+#' @param site_nearest_city the `sf` object returned by `identify_nearest_place()`
+#'
+#' @return an `sf` object with the same columns as `site_visits_yearly` plus `nearest_place_distance_mi`,
+#' and `travel_cat` representing which distance category the site falls into.
+#'
+
+categorize_site_distance <- function(site_visits_yearly, site_nearest_city) {
+  site_visits_yearly %>%
+    inner_join(select(site_nearest_city, site_no, nearest_place_distance_mi)) %>%
+    mutate(travel_cat = cut(nearest_place_distance_mi,
+                            breaks = c(0,2,10,50, 100, Inf),
+                            labels = c('walk (< 2 mi)', 'bike (< 10 mi)',
+                                       'around-town drive (< 50 mi)',
+                                       'day drive (< 100 mi)',
+                                       'multi-day trip (100+ mi)')))
+}
+
 #' @title Categorize each field visit record into one of the 24 hours in a day
 #' @description This function takes the `measurement_tm` column from the field
 #' visit measurement records and categorizes into a single hour of the day between
@@ -203,4 +257,101 @@ categorize_visit_into_time_of_day <- function(field_visit_data) {
     mutate(time_of_day = ceiling(as.numeric(hours) + as.numeric(minutes)/60)) %>%
     dplyr::select(-hours, -minutes) %>%
     filter(!is.na(time_of_day) & time_of_day != 0)
+}
+
+#' @title Plot the top sites and their visitor initials on a bar chart
+#' @description This function makes a basic horizontal bar chart with
+#' the top sites and how many total visits they've had for the set time
+#' period. Includes a secondary bar showing visits by the topmost individual.
+#'
+#' @param highest_sites_bff the data.frame returned by `link_most_visited_sites_bff()`
+#'
+#' @return a ggplot object of a horizontal bar plot
+#'
+
+plot_best_friend_bars <- function(highest_sites_bff) {
+  ggplot(highest_sites_bff, aes(x = station_nm_f)) +
+    geom_bar(aes(y = n_bff_visits), stat="identity", position = "identity", fill = '#F6CCB0') +
+    geom_bar(aes(y = n_total_visits), stat="identity", position = "identity", fill = NA,
+             color = '#3774A3', size = 2) +
+    geom_label(aes(y = n_total_visits, label = sprintf("%s total visits", n_total_visits)), hjust = "left", nudge_y = 10) +
+    geom_label(aes(y = n_bff_visits, label = sprintf("%s visited %s times", best_friend, n_bff_visits)), hjust = "left", nudge_y = 5) +
+    ylim(c(0, max(highest_sites_bff$n_total_visits)*1.25)) +
+    theme_minimal() +
+    theme(panel.grid = element_blank()) +
+    coord_flip()
+}
+
+#' @title Plot the distribution of visit frequency and travel times for each site
+#' @description This function makes a violin chart with every site plotted showing
+#' their frequency of visits through an annual visit average and their distance from
+#' populated location.
+#'
+#' @param travel_distance_data the data.frame returned by `categorize_site_distance()`
+#'
+#' @return a ggplot object of a violin plot for each site with their average
+#' annual visits on the y-axis and travel categories on the x-axis
+#'
+
+plot_travel_distance_violins <- function(travel_distance_data) {
+  ggplot(travel_distance_data,
+         aes(x = travel_cat, y = avg_annual_visits,
+             color = travel_cat, fill = travel_cat)) +
+    scale_y_continuous(breaks = seq(0, 150, by=25)) +
+    geom_violin(alpha = 0.5, position = position_dodge(width = 0.75), size = 2,color=NA) +
+    ggbeeswarm::geom_quasirandom(shape = 21, size = 2, dodge.width = 0.75, color="white", alpha=0.5) +
+    scico::scale_color_scico_d(palette = 'lapaz', begin = 0.3, direction = -1) +
+    scico::scale_fill_scico_d(palette = 'lapaz', end = 0.8, direction = -1) +
+    theme_minimal() +
+    theme(
+      legend.position="none",
+      axis.title.x = element_blank(),
+      panel.grid = element_blank(),
+      text = element_text(color = "darkgrey"),
+      axis.text = element_text(color = "darkgrey"),
+      plot.background =  element_rect(fill = "transparent", color = "transparent"),
+      panel.background = element_rect(fill = "transparent", color = "transparent"),
+      panel.grid.major.y = element_line(color = "lightgrey")
+    )
+}
+
+#' @title Plot the field visit time of days
+#' @description This function makes a radial plot of every field visit and their
+#' time of day for the visit.
+#'
+#' @param field_visit_data_with_hour the data.frame returned by `categorize_visit_into_time_of_day()`
+#'
+#' @return a ggplot object of a radial chart with a dot for every visit and the time of day
+#' plotted along the "x-axis". The y-axis does not have specific meaning, but the points
+#' are jittered to be able to show the density.
+#'
+
+plot_time_of_day_radial <- function(field_visit_data_with_hour) {
+
+  # Simple wrapper around `cut()` to choose a color for each hour (1:24)
+  choose_sunset_color <- function(tod) {
+    cut(tod,
+        breaks = c(0,2,4,6,8,10,14,16,18,20,22,24),
+        labels = c("#08183A", "#152852", "#4B3D60",
+                   "#FD5E53", "#FC9C54", "#FFE373",
+                   "#FC9C54", "#FD5E53", "#4B3D60",
+                   "#152852", "#08183A"),
+        include.lowest = TRUE) %>%
+      as.character()
+  }
+
+  field_visit_data_with_hour %>%
+    mutate(dot_color = choose_sunset_color(time_of_day)) %>%
+    select(time_of_day, dot_color) %>%
+    ggplot() +
+    geom_jitter(aes(x = time_of_day, y = 0.5, color = dot_color), width=0.49, alpha=0.7, shape = 1) +
+    scale_color_identity() +
+    coord_polar(start = pi) + theme_void() +
+    theme(
+      # Make the background transparent
+      panel.background = element_rect(fill='transparent', color=NA),
+      plot.background = element_rect(fill='transparent', color=NA),
+      legend.background = element_rect(fill='transparent', color = NA),
+      legend.box.background = element_rect(fill='transparent', color = NA)
+    )
 }
