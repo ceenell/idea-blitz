@@ -1,4 +1,6 @@
 
+##### Data pull and process functions #####
+
 #' @title Parse the `party_nm` field into individual site visitor initials
 #' @description this function separates the `party_nm` field into individual
 #' initials and duplicates the field visit record for each initial contained
@@ -258,6 +260,8 @@ categorize_visit_into_time_of_day <- function(field_visit_data) {
     dplyr::select(-hours, -minutes) %>%
     filter(!is.na(time_of_day) & time_of_day != 0)
 }
+
+##### Plotting functions #####
 
 #' @title Plot the top sites and their visitor initials on a bar chart
 #' @description This function makes a basic horizontal bar chart with
