@@ -13,6 +13,7 @@ options(tidyverse.quiet = TRUE)
 source("1_fetch/src/get_data.R")
 source("2_process/src/chart_data.R")
 source("2_process/src/map_data.R")
+source("3_visualize/src/chart_animation.R")
 
 # Define parameters
 sf::sf_use_s2(FALSE)
@@ -51,4 +52,13 @@ p2 <- list(
                    years = 1984:2020))
 )
 
-c(p1, p2)
+# 3_visualize
+p3 <- list(
+  tar_target(chart_animation_gif,
+             build_graph(chart_data = chart_data, 
+                         col_lines = c("#0abdc6", "#ea00d9"), 
+                         file_out = "3_visualize/out/chart_animation.gif"),
+             format = "file")
+)
+
+c(p1, p2, p3)
