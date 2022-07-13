@@ -44,4 +44,4 @@ vignettes/*.pdf
 bloom-bubbles/in/NGWOS Ecology Data KSummers/
 hydrotech-highlight/_targets/*
 hydrotech-highlight/out
-hydrotech-highlight/tmp
+hydrotech-highlight/*.html
