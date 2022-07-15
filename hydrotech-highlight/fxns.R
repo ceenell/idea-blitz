@@ -124,7 +124,7 @@ link_most_visited_sites_bff <- function(field_visit_bff, field_visit_highest, si
 #' instructions at https://walker-data.com/tidycensus/articles/basic-usage.html
 #' for requesting a key. You will receive the email fast, but note that you may
 #' need to wait a few minutes before successfully clicking on the activate key
-#' URL. Once the key is activated, run `census_api_key("YOUR KEY", install = TRUE)`
+#' URL. Once the key is activated, run `tidycensus::census_api_key("YOUR KEY", install = TRUE)`
 #' and then you should be able to use this function.
 #'
 #' @param state_cd vector of character abbreviations for states to pull place data
