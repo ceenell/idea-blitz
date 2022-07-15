@@ -1,4 +1,4 @@
-# A pipeline for creating a prototype visualiztion highlighting USGS hydrotechs
+# A pipeline for creating a prototype visualization highlighting USGS hydrotechs
 
 This pipeline uses publicly available data to generate 3 different figures exploring the relationship between USGS streamgages and the USGS hydrologic technicians who visit them. Running `targets::tar_make()` will build the full pipeline, including creating 3 distinct figures and a single HTML file with all three figures in one. Prior to being able to succesfully run the full pipeline, you first need an API key from the US Census Bureau to download the population data. See the documentation for `pull_population_data()` in `fxns.R`.
 
