@@ -15,8 +15,6 @@ data_by_year <- function(perim, huc, year){
   out <- data.frame(Year = year,
                     Mean_ws_prop_affected_pc = mean(huc_intersection$prop_burned) %>%
                       as.numeric()*100,
-                    #Total_ws_area_affected_mi2 = sum(huc_intersection$area_int) %>%
-                    #  as.numeric()/2.5900E+6,
                     Population_affected_mil = sum(huc_intersection$SUM_POP)/1000000)
   
   return(out)

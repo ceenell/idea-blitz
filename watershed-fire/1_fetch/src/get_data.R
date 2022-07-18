@@ -22,6 +22,7 @@ get_fire_perim <- function(url, perim_zip_path, perim_tmp_path, crs){
 }
 
 # Get HUC water use assessment data
+# Can't figure out how to download directly from Box
 # Data available from https://usfs-public.app.box.com/v/Forests2Faucets/file/938183618458
 get_huc <- function(file_in, crs){
   huc <- st_read(file_in) %>%
@@ -29,7 +30,10 @@ get_huc <- function(file_in, crs){
   return(huc)
 }
 
-# Get tiles
-get_basemap <- function(file_for_extent){
-  get_tiles(file_for_extent, provider = "CartoDB.DarkMatterNoLabels", crop = T, verbose = T, zoom = 4)
+# Get basemap tiles
+get_basemap <- function(file_in_for_extent, file_out){
+  get_tiles(file_in_for_extent, provider = "CartoDB.DarkMatterNoLabels", crop = T, verbose = T, zoom = 4,
+            cachedir = "1_fetch/tmp/", forceDownload = T) %>%
+    writeRaster(file_out, overwrite = T)
+  return(file_out)
 }
