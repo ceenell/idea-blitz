@@ -1,0 +1,19 @@
+### Notes 7/18/2022
+- Input data: 3 datasets
+  - Fire perimeters 
+  - MTBS: 1984-2020, >1000 ac in western US, > 500ac in eastern US
+  - Download within Targets
+- Forest to Faucets HUC 8 
+  - Watersheds with Forest 2 Faucets 2.0 assessment data appended
+  - ESRI geodatabse available from F2F2_Assessment.zip | Powered by Box
+  - Can’t figure out how to direct download in Targets
+- Basemap tiles
+  - Maptiles package
+  - Download within Targets
+- To do:
+  - [ ] Explicitly size map and chart gifs
+  - [ ] Create map gif
+    - [ ] Morph map frames: `magick::image_morph()`
+    - [ ] Use `seq(1984, 2020, by = 0.5)` to ensure file names are in correct order
+  - [ ] Stitch gifs together, side-by-side
+    - [ ] `magick::image_append()`
