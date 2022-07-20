@@ -1,0 +1,10 @@
+1_fetch/in/
+1_fetch/out/
+!1_fetch/out/.empty
+1_fetch/tmp/
+!1_fetch/tmp/.empty
+_targets/
+3_visualize/out/
+!3_visualize/out/map_frames/.empty
+
+archive/
